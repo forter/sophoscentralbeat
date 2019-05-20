@@ -1,0 +1,195 @@
+package beater
+
+import (
+	"context"
+	"fmt"
+	"time"
+	
+	"github.com/antihax/optional"
+	"github.com/elastic/beats/libbeat/beat"
+	"github.com/elastic/beats/libbeat/common"
+	"github.com/elastic/beats/libbeat/logp"
+	"github.com/mitchellh/mapstructure"
+	
+	"github.com/forter/sophoscentralbeat/config"
+	"github.com/forter/sophoscentralbeat/sophoscentral"
+)
+
+// Sophoscentralbeat configuration.
+type Sophoscentralbeat struct {
+	done   chan struct{}
+	config config.Config
+	sophos *sophoscentral.APIClient
+	sophosAuth context.Context
+	client beat.Client
+	logger logp.Logger
+}
+
+// New creates an instance of sophoscentralbeat.
+func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
+	logger := logp.NewLogger("sophoscentralbeat-internal")
+	c := config.DefaultConfig
+	sophoscentralConfig := sophoscentral.NewConfiguration()
+	if err := cfg.Unpack(&c); err != nil {
+		return nil, fmt.Errorf("Error reading config file: %v", err)
+	}
+	sophos := sophoscentral.NewAPIClient(sophoscentralConfig)
+	auth := context.WithValue(context.Background(), sophoscentral.ContextAPIKey, sophoscentral.APIKey{
+		Key: c.APIKey,
+	})
+	bt := &Sophoscentralbeat{
+		done:   make(chan struct{}),
+		sophos: sophos,
+		sophosAuth: auth,
+		config: c,
+		logger: *logger,
+	}
+	return bt, nil
+}
+
+func GetSophosEvents(scb Sophoscentralbeat) ([]sophoscentral.LegacyEventEntity, error) {
+	var items []sophoscentral.LegacyEventEntity
+	now := time.Now().UTC()
+	from := now.Add(scb.config.Period * -1)
+	options := &sophoscentral.GetEventsUsingGET1Opts{
+		Limit: optional.NewInt32(1000),
+		FromDate: optional.NewInt64(from.Unix()),
+	}
+	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
+	if err != nil {
+		scb.logger.Error(err)
+		return nil, err
+	}
+	for _, item := range value.Items {
+		items = append(items, item)
+	}
+	for value.HasMore == true {
+		options.Cursor = optional.NewString(value.NextCursor)
+		value, _, err = scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
+		if err != nil {
+			scb.logger.Error(err)
+			return nil, err
+		}
+		for _, item := range value.Items {
+			items = append(items, item)
+		}
+	}
+	return value.Items, nil
+}
+
+func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (common.MapStr, error) {
+	var result common.MapStr
+	err := mapstructure.Decode(entity, &result)
+	if err != nil {
+		logp.L().Error("Error decoding Okta LogEvent record", err)
+		return nil, err
+	}
+	return result, nil
+}
+
+func GetSophosAlerts(scb Sophoscentralbeat) ([]sophoscentral.AlertEntity, error) {
+	var items []sophoscentral.AlertEntity
+	now := time.Now().UTC()
+	from := now.Add(scb.config.Period * -1)
+	options := &sophoscentral.GetAlertsUsingGET1Opts{
+		Limit: optional.NewInt32(1000),
+		FromDate: optional.NewInt64(from.Unix()),
+	}
+	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
+	if err != nil {
+		scb.logger.Error(err)
+		return nil, err
+	}
+	for _, item := range value.Items {
+		items = append(items, item)
+	}
+	for value.HasMore == true {
+		options.Cursor = optional.NewString(value.NextCursor)
+		value, _, err = scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
+		if err != nil {
+			scb.logger.Error(err)
+			return nil, err
+		}
+		for _, item := range value.Items {
+			items = append(items, item)
+		}
+	}
+	return items, nil
+}
+
+func AlertEntityToCommonMap(entity sophoscentral.AlertEntity) (common.MapStr, error) {
+	var result common.MapStr
+	err := mapstructure.Decode(entity, &result)
+	if err != nil {
+		logp.L().Error("Error decoding Okta LogEvent record", err)
+		return nil, err
+	}
+	return result, nil
+}
+
+// Run starts sophoscentralbeat.
+func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
+	scb.logger.Info("sophoscentralbeat is running! Hit CTRL-C to stop it.")
+
+	var err error
+	scb.client, err = b.Publisher.Connect()
+	if err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(scb.config.Period)
+	counter := 1
+	for {
+		select {
+		case <-scb.done:
+			return nil
+		case <-ticker.C:
+		}
+		events, err := GetSophosEvents(*scb)
+		if err != nil {
+			scb.logger.Error(err)
+		}
+		for _, event := range events {
+			values, err := LegacyEventEntityToCommonMap(event)
+			values["type"] = b.Info.Name
+			if err != nil {
+				scb.logger.Error("Could not convert event")
+				return err
+			}
+			values["sophos_type"] = "event"
+			event := beat.Event{
+				Timestamp: time.Now(),
+				Fields: values,
+			}
+			scb.client.Publish(event)
+		}
+		alerts, err := GetSophosAlerts(*scb)
+		if err != nil {
+			scb.logger.Error(err)
+		}
+		if err != nil {
+			scb.logger.Error(err)
+		}
+		for _, alert := range alerts {
+			values, err := AlertEntityToCommonMap(alert)
+			values["type"] = b.Info.Name
+			if err != nil {
+				scb.logger.Error("Could not convert alert")
+				return err
+			}
+			values["sophos_type"] = "event"
+			event := beat.Event{
+				Timestamp: time.Now(),
+				Fields: values,
+			}
+			scb.client.Publish(event)
+			scb.logger.Info("Event sent")
+		}
+	}
+}
+
+// Stop stops sophoscentralbeat.
+func (bt *Sophoscentralbeat) Stop() {
+	bt.client.Close()
+	close(bt.done)
+}
