@@ -1,6 +1,6 @@
 # \EventControllerV1ImplApi
 
-All URIs are relative to *http://api1.central.sophos.com/gateway*
+All URIs are relative to *https://api1.central.sophos.com/gateway*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------

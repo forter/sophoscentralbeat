@@ -1,4 +1,4 @@
-~~~~# Go API client for sophoscentral
+# Go API client for sophoscentral
 
 Swagger Specifications for public APIs
 
@@ -29,7 +29,7 @@ import "./sophoscentral"
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *http://api1.central.sophos.com/gateway*
+All URIs are relative to *https://api1.central.sophos.com/gateway*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------

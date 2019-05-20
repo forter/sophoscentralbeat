@@ -12,7 +12,7 @@ info:
   title: Sophos Public API
   version: beta
 servers:
-- url: //api1.central.sophos.com/gateway
+- url: https://api1.central.sophos.com/gateway
 tags:
 - description: Retrieve events for a given customer
   name: event-controller-v-1-impl

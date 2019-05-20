@@ -10,13 +10,13 @@ const (
 )
 
 type Config struct {
-	Period time.Duration `config:"period"`
-	APIKey  string `config:"api_key"`
-	Authorization string `config:"authorization"`
+	Period        time.Duration `config:"period"`
+	APIKey        string        `config:"api_key"`
+	Authorization string        `config:"authorization"`
 }
 
 var DefaultConfig = Config{
-	Period: 300 * time.Second,
-	APIKey: Filler,
+	Period:        300 * time.Second,
+	APIKey:        Filler,
 	Authorization: Filler,
 }

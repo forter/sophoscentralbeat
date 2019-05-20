@@ -61,7 +61,7 @@ type Configuration struct {
 
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
-		BasePath:      "http://api1.central.sophos.com/gateway",
+		BasePath:      "https://api1.central.sophos.com/gateway",
 		DefaultHeader: make(map[string]string),
 		UserAgent:     "OpenAPI-Generator/1.0.0/go",
 	}

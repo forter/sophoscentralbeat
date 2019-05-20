@@ -4,25 +4,25 @@ import (
 	"context"
 	"fmt"
 	"time"
-	
+
 	"github.com/antihax/optional"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/mitchellh/mapstructure"
-	
+
 	"github.com/forter/sophoscentralbeat/config"
 	"github.com/forter/sophoscentralbeat/sophoscentral"
 )
 
 // Sophoscentralbeat configuration.
 type Sophoscentralbeat struct {
-	done   chan struct{}
-	config config.Config
-	sophos *sophoscentral.APIClient
+	done       chan struct{}
+	config     config.Config
+	sophos     *sophoscentral.APIClient
 	sophosAuth context.Context
-	client beat.Client
-	logger logp.Logger
+	client     beat.Client
+	logger     logp.Logger
 }
 
 // New creates an instance of sophoscentralbeat.
@@ -38,11 +38,11 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		Key: c.APIKey,
 	})
 	bt := &Sophoscentralbeat{
-		done:   make(chan struct{}),
-		sophos: sophos,
+		done:       make(chan struct{}),
+		sophos:     sophos,
 		sophosAuth: auth,
-		config: c,
-		logger: *logger,
+		config:     c,
+		logger:     *logger,
 	}
 	return bt, nil
 }
@@ -52,7 +52,7 @@ func GetSophosEvents(scb Sophoscentralbeat) ([]sophoscentral.LegacyEventEntity, 
 	now := time.Now().UTC()
 	from := now.Add(scb.config.Period * -1)
 	options := &sophoscentral.GetEventsUsingGET1Opts{
-		Limit: optional.NewInt32(1000),
+		Limit:    optional.NewInt32(1000),
 		FromDate: optional.NewInt64(from.Unix()),
 	}
 	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
@@ -92,7 +92,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) ([]sophoscentral.AlertEntity, error)
 	now := time.Now().UTC()
 	from := now.Add(scb.config.Period * -1)
 	options := &sophoscentral.GetAlertsUsingGET1Opts{
-		Limit: optional.NewInt32(1000),
+		Limit:    optional.NewInt32(1000),
 		FromDate: optional.NewInt64(from.Unix()),
 	}
 	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
@@ -138,7 +138,6 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 	}
 
 	ticker := time.NewTicker(scb.config.Period)
-	counter := 1
 	for {
 		select {
 		case <-scb.done:
@@ -159,7 +158,7 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 			values["sophos_type"] = "event"
 			event := beat.Event{
 				Timestamp: time.Now(),
-				Fields: values,
+				Fields:    values,
 			}
 			scb.client.Publish(event)
 		}
@@ -177,10 +176,10 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 				scb.logger.Error("Could not convert alert")
 				return err
 			}
-			values["sophos_type"] = "event"
+			values["sophos_type"] = "alert"
 			event := beat.Event{
 				Timestamp: time.Now(),
-				Fields: values,
+				Fields:    values,
 			}
 			scb.client.Publish(event)
 			scb.logger.Info("Event sent")

@@ -4,4 +4,6 @@
 
 sophoscentralbeat:
   # Defines how often an event is sent to the output
-  period: 1s
+  period: 5m
+  api_key: ${SOPHOS_CENTRAL_API_KEY}
+  authorization: ${SOPHOS_CENTRAL_AUTHORIZATION}

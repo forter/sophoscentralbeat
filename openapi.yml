@@ -382,7 +382,7 @@ paths:
       security:
         - api_key: []
 servers:
-  - url: //api1.central.sophos.com/gateway
+  - url: https://api1.central.sophos.com/gateway
 components:
   securitySchemes:
     api_key:
