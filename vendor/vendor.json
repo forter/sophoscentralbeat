@@ -1,0 +1,37 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "pGDOZ1W3KSVehoexgXGIEwQ2Vxw=",
+			"path": "github.com/antihax/optional",
+			"revision": "ca021399b1a6796ecb758292c6311ce0b28857fc",
+			"revisionTime": "2018-04-07T02:43:04Z"
+		},
+		{
+			"checksumSHA1": "4PINIDB/Vd357g91+a3RONh2vRk=",
+			"path": "github.com/mitchellh/mapstructure",
+			"revision": "3536a929edddb9a5b34bd6861dc4a9647cb459fe",
+			"revisionTime": "2018-10-05T04:51:35Z"
+		},
+		{
+			"checksumSHA1": "r3TepGHO4dhGIrtN0jV7TFq8Kms=",
+			"path": "golang.org/x/net/context/ctxhttp",
+			"revision": "3ec19112720433827bbce8be9342797f5a6aaaf9",
+			"revisionTime": "2019-05-12T12:16:34Z"
+		},
+		{
+			"checksumSHA1": "YmT7rublqJIk4NFkbO3xxNoofXY=",
+			"path": "golang.org/x/oauth2",
+			"revision": "950ef44c6e079baf075030377d90bf0c7e4b7b7a",
+			"revisionTime": "2019-05-17T17:56:57Z"
+		},
+		{
+			"checksumSHA1": "FJz3MJJPqThzUiGZMvROZLJ07HE=",
+			"path": "golang.org/x/oauth2/internal",
+			"revision": "950ef44c6e079baf075030377d90bf0c7e4b7b7a",
+			"revisionTime": "2019-05-17T17:56:57Z"
+		}
+	],
+	"rootPath": "github.com/forter/sophoscentralbeat"
+}

@@ -33,6 +33,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	if err := cfg.Unpack(&c); err != nil {
 		return nil, fmt.Errorf("Error reading config file: %v", err)
 	}
+	logger.Info("Period set to %s", c.Period.String())
 	sophos := sophoscentral.NewAPIClient(sophoscentralConfig)
 	auth := context.WithValue(context.Background(), sophoscentral.ContextAPIKey, sophoscentral.APIKey{
 		Key: c.APIKey,
@@ -48,6 +49,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 }
 
 func GetSophosEvents(scb Sophoscentralbeat) ([]sophoscentral.LegacyEventEntity, error) {
+	scb.logger.Info("Making sophos event call")
 	var items []sophoscentral.LegacyEventEntity
 	now := time.Now().UTC()
 	from := now.Add(scb.config.Period * -1)
@@ -79,7 +81,12 @@ func GetSophosEvents(scb Sophoscentralbeat) ([]sophoscentral.LegacyEventEntity, 
 
 func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (common.MapStr, error) {
 	var result common.MapStr
-	err := mapstructure.Decode(entity, &result)
+	mConfig := &mapstructure.DecoderConfig{
+		TagName: "json",
+		Result: &result,
+	}
+	decoder, _ := mapstructure.NewDecoder(mConfig)
+	err := decoder.Decode(entity)
 	if err != nil {
 		logp.L().Error("Error decoding Okta LogEvent record", err)
 		return nil, err
@@ -88,6 +95,7 @@ func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (commo
 }
 
 func GetSophosAlerts(scb Sophoscentralbeat) ([]sophoscentral.AlertEntity, error) {
+	scb.logger.Info("Making sophos alert call")
 	var items []sophoscentral.AlertEntity
 	now := time.Now().UTC()
 	from := now.Add(scb.config.Period * -1)
@@ -119,7 +127,12 @@ func GetSophosAlerts(scb Sophoscentralbeat) ([]sophoscentral.AlertEntity, error)
 
 func AlertEntityToCommonMap(entity sophoscentral.AlertEntity) (common.MapStr, error) {
 	var result common.MapStr
-	err := mapstructure.Decode(entity, &result)
+	mConfig := &mapstructure.DecoderConfig{
+		TagName: "json",
+		Result: &result,
+	}
+	decoder, _ := mapstructure.NewDecoder(mConfig)
+	err := decoder.Decode(entity)
 	if err != nil {
 		logp.L().Error("Error decoding Okta LogEvent record", err)
 		return nil, err
@@ -143,11 +156,14 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 		case <-scb.done:
 			return nil
 		case <-ticker.C:
+			scb.logger.Info("Tick")
 		}
+		scb.logger.Info("Attempting to fetch Sophos Central Events")
 		events, err := GetSophosEvents(*scb)
 		if err != nil {
 			scb.logger.Error(err)
 		}
+		var toSend []beat.Event
 		for _, event := range events {
 			values, err := LegacyEventEntityToCommonMap(event)
 			values["type"] = b.Info.Name
@@ -160,12 +176,10 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 				Timestamp: time.Now(),
 				Fields:    values,
 			}
-			scb.client.Publish(event)
+			toSend = append(toSend, event)
 		}
+		scb.logger.Info("Attempting to fetch Sophos Alerts")
 		alerts, err := GetSophosAlerts(*scb)
-		if err != nil {
-			scb.logger.Error(err)
-		}
 		if err != nil {
 			scb.logger.Error(err)
 		}
@@ -181,9 +195,10 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 				Timestamp: time.Now(),
 				Fields:    values,
 			}
-			scb.client.Publish(event)
-			scb.logger.Info("Event sent")
+			toSend = append(toSend, event)
 		}
+		scb.client.PublishAll(toSend)
+		scb.logger.Info("Events sent")
 	}
 }
 
