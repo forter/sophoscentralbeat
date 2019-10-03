@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/forter/sophoscentralbeat/beater"
+	"github.com/logrhythm/sophoscentralbeat/beater"
 
 	cmd "github.com/elastic/beats/libbeat/cmd"
 	"github.com/elastic/beats/libbeat/cmd/instance"

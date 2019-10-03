@@ -11,8 +11,8 @@ import (
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/forter/sophoscentralbeat/config"
-	"github.com/forter/sophoscentralbeat/sophoscentral"
+	"github.com/logrhythm/sophoscentralbeat/config"
+	"github.com/logrhythm/sophoscentralbeat/sophoscentral"
 )
 
 // Sophoscentralbeat configuration.
