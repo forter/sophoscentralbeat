@@ -12,11 +12,12 @@ package sophoscentral
 
 import (
 	"context"
-	"github.com/antihax/optional"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/antihax/optional"
 )
 
 // Linger please
@@ -47,7 +48,7 @@ type GetAlertsUsingGET1Opts struct {
 	XTimestamp optional.String
 }
 
-func (a *AlertControllerV1ImplApiService) GetAlertsUsingGET1(ctx context.Context, xApiKey string, authorization string, localVarOptionals *GetAlertsUsingGET1Opts) (AlertAggregate, *http.Response, error) {
+func (a *AlertControllerV1ImplApiService) GetAlertsUsingGET1(ctx context.Context, xApiKey string, authorization string, baseurl string, localVarOptionals *GetAlertsUsingGET1Opts) (AlertAggregate, *http.Response, error) {
 	var (
 		localVarHttpMethod   = strings.ToUpper("Get")
 		localVarPostBody     interface{}
@@ -58,7 +59,7 @@ func (a *AlertControllerV1ImplApiService) GetAlertsUsingGET1(ctx context.Context
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/siem/v1/alerts"
+	localVarPath := baseurl + "/siem/v1/alerts"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

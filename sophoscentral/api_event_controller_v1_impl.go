@@ -12,11 +12,12 @@ package sophoscentral
 
 import (
 	"context"
-	"github.com/antihax/optional"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/antihax/optional"
 )
 
 // Linger please
@@ -49,7 +50,7 @@ type GetEventsUsingGET1Opts struct {
 	XTimestamp   optional.String
 }
 
-func (a *EventControllerV1ImplApiService) GetEventsUsingGET1(ctx context.Context, xApiKey string, authorization string, localVarOptionals *GetEventsUsingGET1Opts) (EventAggregate, *http.Response, error) {
+func (a *EventControllerV1ImplApiService) GetEventsUsingGET1(ctx context.Context, xApiKey string, authorization string, baseURL string, localVarOptionals *GetEventsUsingGET1Opts) (EventAggregate, *http.Response, error) {
 	var (
 		localVarHttpMethod   = strings.ToUpper("Get")
 		localVarPostBody     interface{}
@@ -60,7 +61,7 @@ func (a *EventControllerV1ImplApiService) GetEventsUsingGET1(ctx context.Context
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/siem/v1/events"
+	localVarPath := baseURL + "/siem/v1/events"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

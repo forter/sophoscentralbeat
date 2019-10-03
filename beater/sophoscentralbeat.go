@@ -23,6 +23,7 @@ type Sophoscentralbeat struct {
 	sophosAuth context.Context
 	client     beat.Client
 	logger     logp.Logger
+	basepath   string
 }
 
 // New creates an instance of sophoscentralbeat.
@@ -44,6 +45,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		sophosAuth: auth,
 		config:     c,
 		logger:     *logger,
+		basepath:   c.Basepath,
 	}
 	return bt, nil
 }
@@ -57,7 +59,7 @@ func GetSophosEvents(scb Sophoscentralbeat) ([]sophoscentral.LegacyEventEntity, 
 		Limit:    optional.NewInt32(1000),
 		FromDate: optional.NewInt64(from.Unix()),
 	}
-	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
+	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 	if err != nil {
 		scb.logger.Error(err)
 		return nil, err
@@ -67,7 +69,7 @@ func GetSophosEvents(scb Sophoscentralbeat) ([]sophoscentral.LegacyEventEntity, 
 	}
 	for value.HasMore == true {
 		options.Cursor = optional.NewString(value.NextCursor)
-		value, _, err = scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
+		value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 		if err != nil {
 			scb.logger.Error(err)
 			return nil, err
@@ -83,7 +85,7 @@ func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (commo
 	var result common.MapStr
 	mConfig := &mapstructure.DecoderConfig{
 		TagName: "json",
-		Result: &result,
+		Result:  &result,
 	}
 	decoder, _ := mapstructure.NewDecoder(mConfig)
 	err := decoder.Decode(entity)
@@ -103,7 +105,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) ([]sophoscentral.AlertEntity, error)
 		Limit:    optional.NewInt32(1000),
 		FromDate: optional.NewInt64(from.Unix()),
 	}
-	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
+	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 	if err != nil {
 		scb.logger.Error(err)
 		return nil, err
@@ -113,7 +115,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) ([]sophoscentral.AlertEntity, error)
 	}
 	for value.HasMore == true {
 		options.Cursor = optional.NewString(value.NextCursor)
-		value, _, err = scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, options)
+		value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 		if err != nil {
 			scb.logger.Error(err)
 			return nil, err
@@ -129,7 +131,7 @@ func AlertEntityToCommonMap(entity sophoscentral.AlertEntity) (common.MapStr, er
 	var result common.MapStr
 	mConfig := &mapstructure.DecoderConfig{
 		TagName: "json",
-		Result: &result,
+		Result:  &result,
 	}
 	decoder, _ := mapstructure.NewDecoder(mConfig)
 	err := decoder.Decode(entity)

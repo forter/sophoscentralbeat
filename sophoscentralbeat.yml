@@ -4,9 +4,10 @@
 
 sophoscentralbeat:
   # Defines how often an event is sent to the output
-  period: 5m
-  api_key: ${SOPHOS_CENTRAL_API_KEY}
-  authorization: ${SOPHOS_CENTRAL_AUTHORIZATION}
+  period: 5s
+  api_key: "korHZDuPva1izrdXOjVeW7TYAq21DgQ78LFZ1DnM" #${SOPHOS_CENTRAL_API_KEY}
+  authorization: "Basic ZDkwN2E1Y2EtOWUwZS00MmFkLTg0YTUtNWQ2N2E5MDIwZWVhOjRTSzZLTTNERFZYUFBIUUdGRElNNDRCUjZPUFpUVEtKK2tvckhaRHVQdmExaXpyZFhPalZlVzdUWUFxMjFEZ1E3OExGWjFEbk0=" #${SOPHOS_CENTRAL_AUTHORIZATION}
+  api_baseurl: "https://api5.central.sophos.com/gateway"
 
 #================================ General =====================================
 
@@ -71,14 +72,21 @@ setup.kibana:
 # Configure what output to use when sending the data collected by the beat.
 
 #-------------------------- Elasticsearch output ------------------------------
-output.elasticsearch:
+#output.elasticsearch:
   # Array of hosts to connect to.
-  hosts: ["localhost:9200"]
+  #hosts: ["localhost:9200"]
 
   # Optional protocol and basic auth credentials.
   #protocol: "https"
   #username: "elastic"
   #password: "changeme"
+
+output:
+    file:
+      path: "data"
+      filename: "sophosbeat.dat"
+      rotate_every_kb: 1000
+      number_of_files: 50
 
 #----------------------------- Logstash output --------------------------------
 #output.logstash:
