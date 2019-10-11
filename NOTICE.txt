@@ -1,5 +1,5 @@
 sophoscentralbeat
-Copyright 2019 Forter RnD
+Copyright 2019 logrhythm RnD
 
 This product includes software developed by The Apache Software
 Foundation (http://www.apache.org/).

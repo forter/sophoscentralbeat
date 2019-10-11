@@ -3,7 +3,7 @@
 Welcome to Sophoscentralbeat.
 
 Ensure that this folder is at the following location:
-`${GOPATH}/src/github.com/forter/sophoscentralbeat`
+`${GOPATH}/src/github.com/logrhythm/sophoscentralbeat`
 
 ## Getting Started with Sophoscentralbeat
 
@@ -24,7 +24,7 @@ It will create a clean git history for each major step. Note that you can always
 To push Sophoscentralbeat in the git repository, run the following commands:
 
 ```
-git remote set-url origin https://github.com/forter/sophoscentralbeat
+git remote set-url origin https://github.com/logrhythm/sophoscentralbeat
 git push origin master
 ```
 
@@ -97,8 +97,8 @@ make clean
 To clone Sophoscentralbeat from the git repository, run the following commands:
 
 ```
-mkdir -p ${GOPATH}/src/github.com/forter/sophoscentralbeat
-git clone https://github.com/forter/sophoscentralbeat ${GOPATH}/src/github.com/forter/sophoscentralbeat
+mkdir -p ${GOPATH}/src/github.com/logrhythm/sophoscentralbeat
+git clone https://github.com/logrhythm/sophoscentralbeat ${GOPATH}/src/github.com/logrhythm/sophoscentralbeat
 ```
 
 
