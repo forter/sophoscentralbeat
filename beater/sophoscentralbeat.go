@@ -65,6 +65,7 @@ func GetSophosEvents(scb Sophoscentralbeat) ([]sophoscentral.LegacyEventEntity, 
 		return nil, err
 	}
 	for _, item := range value.Items {
+		// fmt.Println(item)
 		items = append(items, item)
 	}
 	for value.HasMore == true {
@@ -144,6 +145,7 @@ func AlertEntityToCommonMap(entity sophoscentral.AlertEntity) (common.MapStr, er
 
 // Run starts sophoscentralbeat.
 func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
+
 	scb.logger.Info("sophoscentralbeat is running! Hit CTRL-C to stop it.")
 
 	var err error
@@ -167,35 +169,26 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 		}
 		var toSend []beat.Event
 		for _, event := range events {
-			values, err := LegacyEventEntityToCommonMap(event)
-			values["type"] = b.Info.Name
-			if err != nil {
-				scb.logger.Error("Could not convert event")
-				return err
-			}
-			values["sophos_type"] = "event"
-			event := beat.Event{
+			beatEvent := beat.Event{
 				Timestamp: time.Now(),
-				Fields:    values,
+				Fields: common.MapStr{
+					"response": event,
+				},
 			}
-			toSend = append(toSend, event)
+			toSend = append(toSend, beatEvent)
 		}
+
 		scb.logger.Info("Attempting to fetch Sophos Alerts")
 		alerts, err := GetSophosAlerts(*scb)
 		if err != nil {
 			scb.logger.Error(err)
 		}
 		for _, alert := range alerts {
-			values, err := AlertEntityToCommonMap(alert)
-			values["type"] = b.Info.Name
-			if err != nil {
-				scb.logger.Error("Could not convert alert")
-				return err
-			}
-			values["sophos_type"] = "alert"
 			event := beat.Event{
 				Timestamp: time.Now(),
-				Fields:    values,
+				Fields: common.MapStr{
+					"response": alert,
+				},
 			}
 			toSend = append(toSend, event)
 		}
