@@ -64,19 +64,11 @@ func GetSophosEvents(scb Sophoscentralbeat) ([]sophoscentral.LegacyEventEntity, 
 	scb.logger.Info("Making sophos event call")
 	var items []sophoscentral.LegacyEventEntity
 
-	// WriteTimeStamp(123, 0)
-	// WriteTimeStamp(time.Now().Unix(), 0)
-
-	// os.Exit(4)
 	timeStamp, posFileStatus := ReadTimeStamp()
-
-	fmt.Println("New Timestamp events : ", timeStamp)
 
 	from := GenerateYesterdayTimeStamp()
 
-	// yesterDayTimeStamp := 1574681348 //Monday, November 25, 2019 11:29:08 AM
-
-	if posFileStatus != false && timeStamp.EventsTimestamp < from && timeStamp.EventsTimestamp != 0{
+	if posFileStatus != false && timeStamp.EventsTimestamp > from && timeStamp.EventsTimestamp != 0 {
 		from = timeStamp.EventsTimestamp
 	}
 
@@ -133,13 +125,9 @@ func GetSophosAlerts(scb Sophoscentralbeat) ([]sophoscentral.AlertEntity, error)
 
 	timeStamp, posFileStatus := ReadTimeStamp()
 
-	fmt.Println("New Timestamp alerts: ", timeStamp)
-
 	from := GenerateYesterdayTimeStamp()
 
-	// yesterDayTimeStamp := 1574681348 //Monday, November 25, 2019 11:29:08 AM
-
-	if posFileStatus != false && timeStamp.AlertsTimestamp < from && timeStamp.AlertsTimestamp != 0{
+	if posFileStatus != false && timeStamp.AlertsTimestamp > from && timeStamp.AlertsTimestamp != 0 {
 		from = timeStamp.AlertsTimestamp
 	}
 
@@ -152,7 +140,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) ([]sophoscentral.AlertEntity, error)
 		scb.logger.Error(err)
 		return nil, err
 	}
-	fmt.Println("time please : ",time.Now().Unix())
+
 	WriteTimeStamp(0, time.Now().Unix())
 	for _, item := range value.Items {
 		items = append(items, item)
@@ -248,22 +236,17 @@ func (scb *Sophoscentralbeat) Stop() {
 
 //WriteTimeStamp : writes timestamp to file
 func WriteTimeStamp(eventTimeStamp int64, alertTimeStamp int64) {
-	fmt.Println("Alert timestamp received", alertTimeStamp)
+
 	filePath := "data/pos.json"
 	var position Positionfile
 
 	//position file unavailable
 	if _, err := os.Stat(filePath); err != nil {
 
-		fmt.Println("event : ", eventTimeStamp)
-		fmt.Println("alert : ", alertTimeStamp)
-		// eventsTimestamp int64 'json:"eventsTS"'
-		// alertsTimestamp int64 'json:"alertsTS"'
 		position = Positionfile{
 			EventsTimestamp: eventTimeStamp,
 			AlertsTimestamp: alertTimeStamp,
 		}
-
 	} else {
 		//position file available
 
