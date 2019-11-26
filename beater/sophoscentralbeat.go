@@ -279,7 +279,7 @@ func WriteTimeStamp(eventTimeStamp int64, alertTimeStamp int64) {
 //ReadTimeStamp : read tiemstamp from file
 func ReadTimeStamp() (Positionfile, bool) {
 	filePath := "data/pos.json"
-	// timeStamp := Positionfile{} //int64(0)
+
 	var pos Positionfile
 	status := false
 
