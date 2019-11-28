@@ -16,6 +16,7 @@ import (
 	"github.com/elastic/beats/libbeat/paths"
 	"github.com/logrhythm/sophoscentralbeat/config"
 	"github.com/logrhythm/sophoscentralbeat/sophoscentral"
+	"github.com/logrhythm/sophoscentralbeat/handlers"
 )
 
 // Sophoscentralbeat configuration.
@@ -27,10 +28,12 @@ type Sophoscentralbeat struct {
 	client     beat.Client
 	logger     logp.Logger
 	basepath   string
+	currentPosition *scbPosition
+	posHandler      *handlers.PositionHandler
 }
 
 //Positionfile : position file data format
-type Positionfile struct {
+type scbPosition struct {
 	EventsTimestamp int64 `json:"timestamp_events"`
 	AlertsTimestamp int64 `json:"timestamp_alerts"`
 }
@@ -48,6 +51,32 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	auth := context.WithValue(context.Background(), sophoscentral.ContextAPIKey, sophoscentral.APIKey{
 		Key: c.APIKey,
 	})
+
+	pos, err := handlers.NewPostionHandler("")
+
+	if err != nil {
+		logp.Err("Unable to get position Handler %v", err)
+		return nil, err
+	}
+	
+	
+	currentPos:= new(scbPosition)
+	poserr := pos.ReadPositionfromFile(currentPos)
+	yesterdayTime:=GenerateYesterdayTimeStamp()
+	if poserr != nil {
+		
+		currentPos.EventsTimestamp = yesterdayTime
+		currentPos.AlertsTimestamp = yesterdayTime
+	} 
+
+	if currentPos.EventsTimestamp < yesterdayTime {
+		currentPos.EventsTimestamp = yesterdayTime
+	}
+
+	if currentPos.AlertsTimestamp < yesterdayTime {
+		currentPos.AlertsTimestamp = yesterdayTime
+	}
+
 	bt := &Sophoscentralbeat{
 		done:       make(chan struct{}),
 		sophos:     sophos,
@@ -55,6 +84,9 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		config:     c,
 		logger:     *logger,
 		basepath:   c.Basepath,
+		currentPosition: currentPos,
+	    posHandler:      pos,
+
 	}
 	return bt, nil
 }
@@ -63,17 +95,17 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 func GetSophosEvents(scb Sophoscentralbeat) error {
 	scb.logger.Info("Making sophos event call")
 
-	timeStamp, posFileStatus := ReadTimeStamp()
+	//timeStamp, posFileStatus := ReadTimeStamp()
 
-	from := GenerateYesterdayTimeStamp()
+	//from := GenerateYesterdayTimeStamp()
 
-	if posFileStatus != false && timeStamp.EventsTimestamp > from && timeStamp.EventsTimestamp != 0 {
-		from = timeStamp.EventsTimestamp
-	}
+	// if posFileStatus != false && timeStamp.EventsTimestamp > from && timeStamp.EventsTimestamp != 0 {
+	// 	from = timeStamp.EventsTimestamp
+	// }
 
 	options := &sophoscentral.GetEventsUsingGET1Opts{
 		Limit:    optional.NewInt32(1000),
-		FromDate: optional.NewInt64(from),
+		FromDate: optional.NewInt64(scb.currentPosition.EventsTimestamp),
 	}
 
 	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
@@ -81,15 +113,11 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		scb.logger.Error(err)
 		return err
 	}
-
-	//update timestamp
-	//WriteTimeStamp(time.Now().Unix(), 0)
-
  
 	for _, item := range value.Items {
 		scb.client.Publish(GetEvent(item))
 		eventCreationTime,_:=time.Parse(time.RFC3339,item.CreatedAt)
-		WriteTimeStamp(eventCreationTime.Unix(), 0)
+		UpdateEventTime(&scb,eventCreationTime.Unix())
 	}
 
 	for value.HasMore == true {
@@ -106,11 +134,12 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		for _, item := range nestedVal.Items {
 			scb.client.Publish(GetEvent(item))
 			eventCreationTime,_:=time.Parse(time.RFC3339,item.CreatedAt)
-		    WriteTimeStamp(eventCreationTime.Unix(), 0)
+			UpdateEventTime(&scb,eventCreationTime.Unix())
 		 }
 		 value.HasMore = nestedVal.HasMore
 		 value.NextCursor= nestedVal.NextCursor
 		}
+		scb.posHandler.WritePostiontoFile(scb.currentPosition)
 	return nil
 	}
 
@@ -242,20 +271,28 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 // Stop stops sophoscentralbeat.
 func (scb *Sophoscentralbeat) Stop() {
 	scb.client.Close()
+	scb.posHandler.WritePostiontoFile(scb.currentPosition)
 	close(scb.done)
 }
 
+func UpdateEventTime(scb *Sophoscentralbeat,eventTimeStamp int64) {
+	scb.currentPosition.EventsTimestamp = eventTimeStamp
+}
+
+func UpdateAlertTime(scb *Sophoscentralbeat,alertTimeStamp int64) {
+	scb.currentPosition.AlertsTimestamp = alertTimeStamp
+}
 //WriteTimeStamp : writes timestamp to file
 func WriteTimeStamp(eventTimeStamp int64, alertTimeStamp int64) {
 
 	//filePath := "data/pos.json"
 	filePath := filepath.Join(paths.Paths.Home, "logs/pos.json")
-	var position Positionfile
+	var position scbPosition
 
 	//position file unavailable
 	if _, err := os.Stat(filePath); err != nil {
 
-		position = Positionfile{
+		position = scbPosition{
 			EventsTimestamp: eventTimeStamp,
 			AlertsTimestamp: alertTimeStamp,
 		}
@@ -289,10 +326,10 @@ func WriteTimeStamp(eventTimeStamp int64, alertTimeStamp int64) {
 }
 
 //ReadTimeStamp : read tiemstamp from file
-func ReadTimeStamp() (Positionfile, bool) {
+func ReadTimeStamp() (scbPosition, bool) {
 	//filePath := "data/pos.json"
 	filePath := filepath.Join(paths.Paths.Home, "logs/pos.json")
-	var pos Positionfile
+	var pos scbPosition
 	status := false
 
 	if _, err := os.Stat(filePath); err == nil {
