@@ -62,7 +62,6 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 //GetSophosEvents : calls Sophos Events Api
 func GetSophosEvents(scb Sophoscentralbeat) error {
 	scb.logger.Info("Making sophos event call")
-	//var items []sophoscentral.LegacyEventEntity
 
 	timeStamp, posFileStatus := ReadTimeStamp()
 
@@ -84,30 +83,33 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 	}
 
 	//update timestamp
-	WriteTimeStamp(time.Now().Unix(), 0)
+	//WriteTimeStamp(time.Now().Unix(), 0)
 
-	var items []sophoscentral.LegacyEventEntity
-
+ 
 	for _, item := range value.Items {
-		
 		scb.client.Publish(GetEvent(item))
-		items=append(items,item)
+		eventCreationTime,_:=time.Parse(time.RFC3339,item.CreatedAt)
+		WriteTimeStamp(eventCreationTime.Unix(), 0)
 	}
+
 	for value.HasMore == true {
-		options.Cursor = optional.NewString(value.NextCursor)
+		
 		options = &sophoscentral.GetEventsUsingGET1Opts{
 			Limit:    optional.NewInt32(1000),
+			Cursor: optional.NewString(value.NextCursor),
 		}
-		value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
+		nestedVal, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 		if err != nil {
 			scb.logger.Error(err)
 			return err
 		}
-		for _, item := range value.Items {
+		for _, item := range nestedVal.Items {
 			scb.client.Publish(GetEvent(item))
-			items=append(items,item)
+			eventCreationTime,_:=time.Parse(time.RFC3339,item.CreatedAt)
+		    WriteTimeStamp(eventCreationTime.Unix(), 0)
 		 }
-			
+		 value.HasMore = nestedVal.HasMore
+		 value.NextCursor= nestedVal.NextCursor
 		}
 	return nil
 	}
