@@ -5,9 +5,9 @@
 sophoscentralbeat:
   # Defines how often an event is sent to the output
   period: 7s
-  api_key: "" #${SOPHOS_CENTRAL_API_KEY}
-  authorization: "" #${SOPHOS_CENTRAL_AUTHORIZATION}
-  api_baseurl: ""
+  api_key: "gTWIT9KXTb2Qia2yApQ9z2WfcYyKBdEG6V498oYu" #${SOPHOS_CENTRAL_API_KEY}
+  authorization: "Basic YzQwYzZkODUtM2JhZi00ZmQ0LWE0YjItNjY0OTU4N2I2N2JhOjZVQVVWSkZWT1RQQldQWVZFM0NSVUhHT05XUFNFUDNRK2dUV0lUOUtYVGIyUWlhMnlBcFE5ejJXZmNZeUtCZEVHNlY0OThvWXU=" #${SOPHOS_CENTRAL_AUTHORIZATION}
+  api_baseurl: "https://api5.central.sophos.com/gateway"
 
 #================================ General =====================================
 
@@ -115,7 +115,7 @@ processors:
 
 # Sets log level. The default log level is info.
 # Available log levels are: error, warning, info, debug
-#logging.level: debug
+logging.level: debug
 
 # At debug level, you can selectively enable logging only for some components.
 # To enable all selectors use ["*"]. Examples of other selectors are "beat",

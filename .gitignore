@@ -4,4 +4,8 @@
 .DS_Store
 /sophoscentralbeat
 /sophoscentralbeat.test
+logs/*
+data/*
+*.exe
+*/go.mod
 *.pyc
