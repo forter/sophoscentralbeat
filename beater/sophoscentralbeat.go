@@ -157,49 +157,6 @@ func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (commo
 	return result, nil
 }
 
-func GetSophosAlertsNew(scb Sophoscentralbeat) error {
-	scb.logger.Info("Making sophos alert call")
-	// var items []sophoscentral.AlertEntity
-	now := time.Now().UTC()
-	from := now.Add(scb.config.Period * -1)
-	// options := &sophoscentral.GetAlertsUsingGET1Opts{
-	// 	Limit:    optional.NewInt32(1000),
-	// 	FromDate: optional.NewInt64(from.Unix()),
-	// }
-
-	fmt.Println("new : ", scb.currentPosition.AlertsTimestamp)
-	fmt.Println("old : ", from.Unix())
-	// fmt.Printf("New : %T\n",optional.NewInt64(scb.currentPosition.AlertsTimestamp))
-	// fmt.Printf("Old : %T\n",optional.NewInt64(from.Unix()))
-	options := &sophoscentral.GetAlertsUsingGET1Opts{
-		Limit:    optional.NewInt32(1000),
-		FromDate: optional.NewInt64(scb.currentPosition.AlertsTimestamp),
-	}
-
-	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
-	fmt.Println("Value : ", value)
-	fmt.Println("Error : ", err)
-	if err != nil {
-		scb.logger.Error(err)
-		return err
-	}
-	// for _, item := range value.Items {
-	// 	items = append(items, item)
-	// }
-	// for value.HasMore == true {
-	// 	options.Cursor = optional.NewString(value.NextCursor)
-	// 	value, _, err = scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
-	// 	if err != nil {
-	// 		scb.logger.Error(err)
-	// 		return err
-	// 	}
-	// 	for _, item := range value.Items {
-	// 		items = append(items, item)
-	// 	}
-	// }
-	return nil
-}
-
 //GetSophosAlertsOld : call alerts API
 func GetSophosAlerts(scb Sophoscentralbeat) error {
 	scb.logger.Info("Making sophos alert call")
@@ -323,7 +280,6 @@ func UpdateAlertTime(scb *Sophoscentralbeat, alertTimeStamp int64) {
 //WriteTimeStamp : writes timestamp to file
 func WriteTimeStamp(eventTimeStamp int64, alertTimeStamp int64) {
 
-	//filePath := "data/pos.json"
 	filePath := filepath.Join(paths.Paths.Home, "logs/pos.json")
 	var position scbPosition
 
@@ -365,7 +321,6 @@ func WriteTimeStamp(eventTimeStamp int64, alertTimeStamp int64) {
 
 //ReadTimeStamp : read tiemstamp from file
 func ReadTimeStamp() (scbPosition, bool) {
-	//filePath := "data/pos.json"
 	filePath := filepath.Join(paths.Paths.Home, "logs/pos.json")
 	var pos scbPosition
 	status := false
