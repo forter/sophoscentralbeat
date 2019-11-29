@@ -32,7 +32,7 @@ func NewPostionHandler(posFileName string) (*PositionHandler, error) {
 
 	pos := new(PositionHandler)
 	pos.PostionFilePath = posfilepath
-
+	logp.Debug("SophosCentralBeat","Position file path is  : %s", posfilepath)
 	return pos, err
 }
 
