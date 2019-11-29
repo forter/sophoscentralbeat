@@ -77,9 +77,9 @@ func (position *PositionHandler) WritePostiontoFile(v interface{}) (bool, error)
 //GetPostionFile is used to get position file path
 func GetPostionFile() (string, error) {
 
-	tokenCacheDir := "/beats/sophoscentralbeat" //paths.Paths.Home
+	tokenCacheDir := "/beats/sophoscentralbeat"
 
-	posFolder := filepath.Join(tokenCacheDir, "data")
+	posFolder := filepath.Join(tokenCacheDir, "logs")
 
 	err := os.MkdirAll(posFolder, 0700)
 	if err != nil {

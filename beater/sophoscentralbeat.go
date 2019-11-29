@@ -2,18 +2,13 @@ package beater
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/antihax/optional"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/elastic/beats/libbeat/paths"
 	"github.com/logrhythm/sophoscentralbeat/config"
 	"github.com/logrhythm/sophoscentralbeat/handlers"
 	"github.com/logrhythm/sophoscentralbeat/sophoscentral"
@@ -178,7 +173,6 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 		scb.client.Publish(GetEvent(item))
 		alertCreationTime, _ := time.Parse(time.RFC3339, item.CreatedAt)
 		UpdateAlertTime(&scb, alertCreationTime.Unix())
-
 	}
 
 	isDataReceived = len(value.Items) > 0
@@ -277,86 +271,9 @@ func UpdateAlertTime(scb *Sophoscentralbeat, alertTimeStamp int64) {
 	scb.currentPosition.AlertsTimestamp = alertTimeStamp
 }
 
-//WriteTimeStamp : writes timestamp to file
-func WriteTimeStamp(eventTimeStamp int64, alertTimeStamp int64) {
-
-	filePath := filepath.Join(paths.Paths.Home, "logs/pos.json")
-	var position scbPosition
-
-	//position file unavailable
-	if _, err := os.Stat(filePath); err != nil {
-
-		position = scbPosition{
-			EventsTimestamp: eventTimeStamp,
-			AlertsTimestamp: alertTimeStamp,
-		}
-	} else {
-		//position file available
-
-		position, _ = ReadTimeStamp()
-
-		if eventTimeStamp != 0 && alertTimeStamp == 0 {
-			position.EventsTimestamp = eventTimeStamp
-		} else if eventTimeStamp == 0 && alertTimeStamp != 0 {
-			position.AlertsTimestamp = alertTimeStamp
-		} else if eventTimeStamp != 0 && alertTimeStamp != 0 {
-			position.EventsTimestamp = eventTimeStamp
-			position.AlertsTimestamp = alertTimeStamp
-		}
-	}
-
-	jsonFile, err := os.Create(filePath)
-	if err != nil {
-		fmt.Println("Error creating JSON file:", err)
-		return
-	}
-	jsonWriter := io.Writer(jsonFile)
-	encoder := json.NewEncoder(jsonWriter)
-	err = encoder.Encode(&position)
-	if err != nil {
-		fmt.Println("Error encoding JSON to file:", err)
-		return
-	}
-}
-
-//ReadTimeStamp : read tiemstamp from file
-func ReadTimeStamp() (scbPosition, bool) {
-	filePath := filepath.Join(paths.Paths.Home, "logs/pos.json")
-	var pos scbPosition
-	status := false
-
-	if _, err := os.Stat(filePath); err == nil {
-		// path/to/whatever exists
-
-		jsonFile, err := os.Open(filePath)
-		if err != nil {
-			fmt.Println("Error opening JSON file:", err)
-			return pos, false
-		}
-		defer jsonFile.Close()
-		decoder := json.NewDecoder(jsonFile)
-
-		err = decoder.Decode(&pos)
-		if err != nil {
-			fmt.Println("Error decoding JSON:", err)
-			return pos, false
-		}
-
-		status = true
-	}
-
-	return pos, status
-}
-
 //GenerateYesterdayTimeStamp : generate 24 hour prior timestamp
 func GenerateYesterdayTimeStamp() int64 {
 	return time.Now().AddDate(0, 0, -1).UTC().Unix()
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
 }
 
 //GetEvent converts json data to beats json response
