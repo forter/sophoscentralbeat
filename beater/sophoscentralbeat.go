@@ -2,6 +2,7 @@ package beater
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/logrhythm/sophoscentralbeat/handlers"
 	"github.com/logrhythm/sophoscentralbeat/sophoscentral"
 	"github.com/mitchellh/mapstructure"
+
+	encr "github.com/logrhythm/sophoscentralbeat/crypto"
 )
 
 // Sophoscentralbeat configuration.
@@ -44,8 +47,14 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	}
 	logger.Info("Period set to ", c.Period.String())
 	sophos := sophoscentral.NewAPIClient(sophoscentralConfig)
+
+	decryptedAPIKey, err := encr.Decrypt(c.APIKey)
+	if err != nil {
+		return nil, errors.New("Error decrypting API Key")
+	}
+
 	auth := context.WithValue(context.Background(), sophoscentral.ContextAPIKey, sophoscentral.APIKey{
-		Key: c.APIKey,
+		Key: decryptedAPIKey,
 	})
 
 	pos, err := handlers.NewPostionHandler("")
@@ -95,7 +104,16 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		FromDate: optional.NewInt64(scb.currentPosition.EventsTimestamp),
 	}
 
-	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
+	decryptedAPIKey, err := encr.Decrypt(scb.config.APIKey)
+	if err != nil {
+		return errors.New("Error decrypting API Key")
+	}
+	decryptedAuthorization, err := encr.Decrypt(scb.config.Authorization)
+	if err != nil {
+		return errors.New("Error decrypting Authorization Header")
+	}
+
+	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 	if err != nil {
 		scb.logger.Error(err)
 		return err
@@ -131,6 +149,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 
 	if isDataReceived {
 		scb.currentPosition.EventsTimestamp = scb.currentPosition.EventsTimestamp + 1
+		scb.logger.Info("Events sent")
 	}
 
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
@@ -152,7 +171,7 @@ func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (commo
 	return result, nil
 }
 
-//GetSophosAlertsOld : call alerts API
+//GetSophosAlerts : call alerts API
 func GetSophosAlerts(scb Sophoscentralbeat) error {
 	scb.logger.Info("Making sophos alert call")
 
@@ -163,7 +182,16 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 		FromDate: optional.NewInt64(scb.currentPosition.AlertsTimestamp),
 	}
 
-	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
+	decryptedAPIKey, err := encr.Decrypt(scb.config.APIKey)
+	if err != nil {
+		return errors.New("Error decrypting API Key")
+	}
+	decryptedAuthorization, err := encr.Decrypt(scb.config.Authorization)
+	if err != nil {
+		return errors.New("Error decrypting Authorization Header")
+	}
+
+	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 	if err != nil {
 		scb.logger.Error(err)
 		return err
@@ -200,6 +228,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 
 	if isDataReceived {
 		scb.currentPosition.AlertsTimestamp = scb.currentPosition.AlertsTimestamp + 1
+		scb.logger.Info("Alerts sent")
 	}
 
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
@@ -251,8 +280,6 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 		if err != nil {
 			scb.logger.Error(err)
 		}
-
-		scb.logger.Info("Events sent")
 	}
 }
 
