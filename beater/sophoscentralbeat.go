@@ -115,7 +115,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 
 	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 	if err != nil {
-		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials. Error : ", err)
+		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 		return err
 	}
 
@@ -135,7 +135,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		}
 		nestedVal, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 		if err != nil {
-			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials. Error : ", err)
+			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 			return err
 		}
 		for _, item := range nestedVal.Items {
@@ -193,7 +193,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 
 	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 	if err != nil {
-		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials. Error : ", err)
+		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 		return err
 	}
 
@@ -214,7 +214,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 
 		nestedVal, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 		if err != nil {
-			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials. Error : ", err)
+			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 			return err
 		}
 		for _, item := range nestedVal.Items {
