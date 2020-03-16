@@ -115,7 +115,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 
 	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 	if err != nil {
-		scb.logger.Error(err)
+		scb.logger.Error("Sophos API Error : ", err)
 		return err
 	}
 
@@ -193,7 +193,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 
 	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 	if err != nil {
-		scb.logger.Error(err)
+		scb.logger.Error("Sophos API Error : ", err)
 		return err
 	}
 
@@ -272,13 +272,15 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 		scb.logger.Info("Attempting to fetch Sophos Central Events")
 		err := GetSophosEvents(*scb)
 		if err != nil {
-			scb.logger.Error(err)
+			scb.logger.Error("Error response : ", err)
+			return err
 		}
 
 		scb.logger.Info("Attempting to fetch Sophos Alerts")
 		err = GetSophosAlerts(*scb)
 		if err != nil {
-			scb.logger.Error(err)
+			scb.logger.Error("Error response : ", err)
+			return err
 		}
 	}
 }
