@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/antihax/optional"
@@ -41,9 +40,6 @@ type scbPosition struct {
 //for counter
 var recordsReceivedInCycle int64
 var cycleTime int64 = 10 //will be in seconds
-var counterLock sync.RWMutex
-var totalReceivedRecord int64
-var receivedRecord int64
 var receivedEventsLogs int64
 var receivedAlertsLogs int64
 
@@ -170,10 +166,8 @@ func GetSophosEvents(scb Sophoscentralbeat) (int64, error) {
 		scb.logger.Info("Events sent")
 	}
 
-	counterLock.Lock()
 	allEventsLogs = receivedEventsLogCount
 	recordsReceivedInCycle = receivedEventsLogCount + recordsReceivedInCycle
-	counterLock.Unlock()
 
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
 	return allEventsLogs, nil
@@ -262,10 +256,8 @@ func GetSophosAlerts(scb Sophoscentralbeat) (int64, error) {
 		scb.logger.Info("Alerts sent")
 	}
 
-	counterLock.Lock()
 	allAlertsLogs = receivedAlertsLogCount
 	recordsReceivedInCycle = receivedAlertsLogCount + recordsReceivedInCycle
-	counterLock.Unlock()
 
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
 	return allAlertsLogs, nil
@@ -289,16 +281,18 @@ func AlertEntityToCommonMap(entity sophoscentral.AlertEntity) (common.MapStr, er
 // Run starts sophoscentralbeat.
 func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 
-	scb.logger.Info("sophoscentralbeat is running! Hit CTRL-C to stop it.")
-
+	ch := make(chan int64, 1)
+	var totalLogs int64
 	var err error
+
+	scb.logger.Info("sophoscentralbeat is running! Hit CTRL-C to stop it.")
 
 	scb.client, err = b.Publisher.Connect()
 	if err != nil {
 		return err
 	}
 
-	go cycleRoutine(time.Duration(cycleTime))
+	go cycleRoutine(time.Duration(cycleTime), ch)
 
 	ticker := time.NewTicker(scb.config.Period)
 	for {
@@ -318,9 +312,6 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 
 		scb.logger.Info("Total number of Event logs received : ", receivedEventsLogs)
 
-		// go func() {
-		// 	ch <- receivedEventsLogs
-		// }()
 		scb.logger.Info("Attempting to fetch Sophos Alerts")
 		aCnt, err := GetSophosAlerts(*scb)
 		if err != nil {
@@ -329,9 +320,13 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 		}
 		receivedAlertsLogs = receivedAlertsLogs + aCnt
 
-		scb.logger.Info("Total number of Alert logs received : ", receivedAlertsLogs)
+		totalLogs = receivedEventsLogs + receivedAlertsLogs
+		go func() {
+			ch <- totalLogs
+		}()
 
-		scb.logger.Info("Total number of logs received : ", receivedEventsLogs+receivedAlertsLogs)
+		scb.logger.Info("Total number of Alert logs received : ", receivedAlertsLogs)
+		scb.logger.Info("Total number of logs received : ", totalLogs)
 	}
 }
 
@@ -372,23 +367,16 @@ func GetEvent(data interface{}) beat.Event {
 
 }
 
-func cycleRoutine(n time.Duration) {
+func cycleRoutine(n time.Duration, ch chan int64) {
 	for {
-		logsReceived := recordsReceivedInCycle //<-ch
-		fmt.Println("Value A : ", logsReceived)
+		logsReceived := <-ch
 		time.Sleep(n * time.Second)
-		counterLock.Lock()
 		var recordsPerSecond int64
 		if logsReceived > 0 {
-			fmt.Println("time : ", cycleTime, " formatted : ", int64(cycleTime))
 			recordsPerSecond = logsReceived / int64(cycleTime)
-			fmt.Println("here : ", recordsPerSecond)
 		}
 
-		fmt.Println("flush : ", recordsPerSecond)
-		logp.Info("Total number of logs recieved :  %d", totalReceivedRecord)
+		logp.Info("Total number of logs received :  %d", logsReceived)
 		logp.Info("Events Flush Rate:  %v per second", recordsPerSecond)
-		recordsReceivedInCycle = 0
-		counterLock.Unlock()
 	}
 }
