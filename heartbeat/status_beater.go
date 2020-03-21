@@ -8,8 +8,6 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/logrhythm/sophoscentralbeat/lrlog"
-	"github.com/pkg/errors"
 )
 
 // Heartbeat is a structure for heartbeat
@@ -84,7 +82,7 @@ func (sb *StatusBeater) Beat(status int64, description string, publish func(even
 	}
 	msgJSON, err := json.Marshal(msg)
 	if err != nil {
-		lrlog.Warning(errors.Wrap(err, "internal heartbeat message json conversion failed"))
+		logp.Warn("internal heartbeat message json conversion failed %s", err)
 		return
 	}
 	sb.PublishEvent(msgJSON, publish)
