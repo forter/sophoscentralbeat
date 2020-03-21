@@ -37,7 +37,7 @@ func (config *Config) CreateEnabled(doneChan chan struct{}, serviceName string) 
 
 	if config.Interval <= 0 {
 		// Shouldn't happen in regular code path because of our defaults / validation
-		logp.Warn("invalid heartbeat duration specified. duration must be greater than zero")
+		logp.Warn("Heartbeat interval can not be less than zero. Setting to default 5 minute")
 		config.Interval = IntervalValue
 	}
 
