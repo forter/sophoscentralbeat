@@ -131,7 +131,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		return err
 	}
 
-	logsReceivedInCycle = logsReceivedInCycle + int64(len(value.Items))
+	updateCounter(int64(len(value.Items)))
 
 	for _, item := range value.Items {
 		scb.client.Publish(GetEvent(item))
@@ -153,7 +153,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 			return err
 		}
 
-		logsReceivedInCycle = logsReceivedInCycle + int64(len(nestedVal.Items))
+		updateCounter(int64(len(value.Items)))
 
 		for _, item := range nestedVal.Items {
 			scb.client.Publish(GetEvent(item))
@@ -215,7 +215,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 		return err
 	}
 
-	logsReceivedInCycle = logsReceivedInCycle + int64(len(value.Items))
+	updateCounter(int64(len(value.Items)))
 
 	for _, item := range value.Items {
 		scb.client.Publish(GetEvent(item))
@@ -238,7 +238,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 			return err
 		}
 
-		logsReceivedInCycle = logsReceivedInCycle + int64(len(nestedVal.Items))
+		updateCounter(int64(len(value.Items)))
 
 		for _, item := range nestedVal.Items {
 			scb.client.Publish(GetEvent(item))
@@ -369,4 +369,10 @@ func cycleRoutine(n time.Duration) {
 		logp.Info("Total number of logs received:  %d", logsReceived)
 		logp.Info("Events Flush Rate:  %v per second", recordsPerSecond)
 	}
+}
+
+func updateCounter(cnt int64) {
+	counterLock.Lock()
+	logsReceivedInCycle = logsReceivedInCycle + cnt
+	counterLock.Unlock()
 }
