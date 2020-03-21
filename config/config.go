@@ -3,22 +3,30 @@
 
 package config
 
-import "time"
+import (
+	"time"
+
+	hb "github.com/logrhythm/sophoscentralbeat/heartbeat"
+)
 
 const (
 	Filler = "FILLER"
 )
 
 type Config struct {
-	Period        time.Duration `config:"period"`
-	APIKey        string        `config:"api_key"`
-	Authorization string        `config:"authorization"`
-	Basepath      string        `config:"api_baseurl"`
+	Period            time.Duration `config:"period"`
+	APIKey            string        `config:"api_key"`
+	Authorization     string        `config:"authorization"`
+	Basepath          string        `config:"api_baseurl"`
+	HeartbeatInterval time.Duration `config:"heartbeatinterval"`
+	HeartbeatDisabled bool          `config:"heartbeatdisabled"`
 }
 
 var DefaultConfig = Config{
-	Period:        300 * time.Second,
-	APIKey:        Filler,
-	Authorization: Filler,
-	Basepath:      Filler,
+	Period:            300 * time.Second,
+	APIKey:            Filler,
+	Authorization:     Filler,
+	Basepath:          Filler,
+	HeartbeatInterval: hb.IntervalValue,
+	HeartbeatDisabled: false,
 }

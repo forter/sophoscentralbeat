@@ -5,9 +5,11 @@
 sophoscentralbeat:
   # Defines how often an event is sent to the output
   period: 7s
-  api_key: "gTWIT9KXTb2Qia2yApQ9z2WfcYyKBdEG6V498oYu" #${SOPHOS_CENTRAL_API_KEY}
-  authorization: "Basic YzQwYzZkODUtM2JhZi00ZmQ0LWE0YjItNjY0OTU4N2I2N2JhOjZVQVVWSkZWT1RQQldQWVZFM0NSVUhHT05XUFNFUDNRK2dUV0lUOUtYVGIyUWlhMnlBcFE5ejJXZmNZeUtCZEVHNlY0OThvWXU=" #${SOPHOS_CENTRAL_AUTHORIZATION}
-  api_baseurl: "https://api5.central.sophos.com/gateway"
+  api_key: ""
+  authorization: ""
+  api_baseurl: ""
+  heartbeatinterval : 2s
+  heartbeatdisabled: false
 
 #================================ General =====================================
 

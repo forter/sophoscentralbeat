@@ -13,6 +13,7 @@ import (
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/logrhythm/sophoscentralbeat/config"
 	"github.com/logrhythm/sophoscentralbeat/handlers"
+	"github.com/logrhythm/sophoscentralbeat/heartbeat"
 	"github.com/logrhythm/sophoscentralbeat/sophoscentral"
 	"github.com/mitchellh/mapstructure"
 
@@ -30,6 +31,7 @@ type Sophoscentralbeat struct {
 	basepath        string
 	currentPosition *scbPosition
 	posHandler      *handlers.PositionHandler
+	StopChan        chan struct{}
 }
 
 //Positionfile : position file data format
@@ -47,6 +49,9 @@ var (
 	logsReceivedInCycle int64
 	logsReceived        int64
 )
+
+// ServiceName is the name of the service
+const ServiceName = "sophoscentralbeat"
 
 // New creates an instance of sophoscentralbeat.
 func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
@@ -287,6 +292,17 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 
 	go cycleRoutine(time.Duration(cycleTime))
 
+	// Self-reporting heartbeat
+	scb.StopChan = make(chan struct{})
+	hb := heartbeat.NewHeartbeatConfig(scb.config.HeartbeatInterval, scb.config.HeartbeatDisabled)
+	heartbeater, err := hb.CreateEnabled(scb.StopChan, ServiceName)
+	if err != nil {
+		logp.Info("Error while creating new heartbeat object: %v", err)
+	}
+	if heartbeater != nil {
+		heartbeater.Start(scb.StopChan, scb.client.Publish)
+	}
+
 	ticker := time.NewTicker(scb.config.Period)
 	for {
 		select {
@@ -315,6 +331,7 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 func (scb *Sophoscentralbeat) Stop() {
 	scb.client.Close()
 	close(stopCh)
+	scb.StopChan <- struct{}{}
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
 	close(scb.done)
 }
