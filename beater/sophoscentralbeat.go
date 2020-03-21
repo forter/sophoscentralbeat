@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/antihax/optional"
@@ -38,10 +39,14 @@ type scbPosition struct {
 }
 
 //for counter
-var recordsReceivedInCycle int64
-var cycleTime int64 = 10 //will be in seconds
-var receivedEventsLogs int64
-var receivedAlertsLogs int64
+var cycleTime = 10 //will be in seconds
+var stopCh = make(chan struct{})
+
+var (
+	counterLock         sync.RWMutex
+	logsReceivedInCycle int64
+	logsReceived        int64
+)
 
 // New creates an instance of sophoscentralbeat.
 func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
@@ -101,7 +106,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 }
 
 //GetSophosEvents : calls Sophos Events Api
-func GetSophosEvents(scb Sophoscentralbeat) (int64, error) {
+func GetSophosEvents(scb Sophoscentralbeat) error {
 	var receivedEventsLogCount int64
 	var allEventsLogs int64
 
@@ -115,17 +120,17 @@ func GetSophosEvents(scb Sophoscentralbeat) (int64, error) {
 
 	decryptedAPIKey, err := encr.Decrypt(scb.config.APIKey)
 	if err != nil {
-		return 0, errors.New("Error decrypting API Key")
+		return errors.New("Error decrypting API Key")
 	}
 	decryptedAuthorization, err := encr.Decrypt(scb.config.Authorization)
 	if err != nil {
-		return 0, errors.New("Error decrypting Authorization Header")
+		return errors.New("Error decrypting Authorization Header")
 	}
 
 	value, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 	if err != nil {
 		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
-		return 0, err
+		return err
 	}
 
 	receivedEventsLogCount = int64(len(value.Items))
@@ -147,7 +152,7 @@ func GetSophosEvents(scb Sophoscentralbeat) (int64, error) {
 		nestedVal, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 		if err != nil {
 			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
-			return 0, err
+			return err
 		}
 
 		receivedEventsLogCount = receivedEventsLogCount + int64(len(nestedVal.Items))
@@ -166,11 +171,14 @@ func GetSophosEvents(scb Sophoscentralbeat) (int64, error) {
 		scb.logger.Info("Events sent")
 	}
 
+	counterLock.Lock()
 	allEventsLogs = receivedEventsLogCount
-	recordsReceivedInCycle = receivedEventsLogCount + recordsReceivedInCycle
+	logp.Info("Event Logs received in current cycle : %d", allEventsLogs)
+	logsReceivedInCycle = logsReceivedInCycle + allEventsLogs
+	counterLock.Unlock()
 
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
-	return allEventsLogs, nil
+	return nil
 }
 
 func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (common.MapStr, error) {
@@ -189,7 +197,7 @@ func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (commo
 }
 
 //GetSophosAlerts : call alerts API
-func GetSophosAlerts(scb Sophoscentralbeat) (int64, error) {
+func GetSophosAlerts(scb Sophoscentralbeat) error {
 
 	var receivedAlertsLogCount int64
 	var allAlertsLogs int64
@@ -204,17 +212,17 @@ func GetSophosAlerts(scb Sophoscentralbeat) (int64, error) {
 
 	decryptedAPIKey, err := encr.Decrypt(scb.config.APIKey)
 	if err != nil {
-		return 0, errors.New("Error decrypting API Key")
+		return errors.New("Error decrypting API Key")
 	}
 	decryptedAuthorization, err := encr.Decrypt(scb.config.Authorization)
 	if err != nil {
-		return 0, errors.New("Error decrypting Authorization Header")
+		return errors.New("Error decrypting Authorization Header")
 	}
 
 	value, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 	if err != nil {
 		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
-		return 0, err
+		return err
 	}
 
 	receivedAlertsLogCount = int64(len(value.Items))
@@ -237,7 +245,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) (int64, error) {
 		nestedVal, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
 		if err != nil {
 			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
-			return 0, err
+			return err
 		}
 
 		receivedAlertsLogCount = receivedAlertsLogCount + int64(len(nestedVal.Items))
@@ -256,11 +264,14 @@ func GetSophosAlerts(scb Sophoscentralbeat) (int64, error) {
 		scb.logger.Info("Alerts sent")
 	}
 
+	counterLock.Lock()
 	allAlertsLogs = receivedAlertsLogCount
-	recordsReceivedInCycle = receivedAlertsLogCount + recordsReceivedInCycle
+	logp.Info("Alert Logs received in current cycle : %d", allAlertsLogs)
+	logsReceivedInCycle = logsReceivedInCycle + allAlertsLogs
+	counterLock.Unlock()
 
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
-	return allAlertsLogs, nil
+	return nil
 }
 
 func AlertEntityToCommonMap(entity sophoscentral.AlertEntity) (common.MapStr, error) {
@@ -281,8 +292,6 @@ func AlertEntityToCommonMap(entity sophoscentral.AlertEntity) (common.MapStr, er
 // Run starts sophoscentralbeat.
 func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 
-	ch := make(chan int64, 1)
-	var totalLogs int64
 	var err error
 
 	scb.logger.Info("sophoscentralbeat is running! Hit CTRL-C to stop it.")
@@ -292,7 +301,7 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	go cycleRoutine(time.Duration(cycleTime), ch)
+	go cycleRoutine(time.Duration(cycleTime))
 
 	ticker := time.NewTicker(scb.config.Period)
 	for {
@@ -303,36 +312,25 @@ func (scb *Sophoscentralbeat) Run(b *beat.Beat) error {
 			scb.logger.Info("Tick")
 		}
 		scb.logger.Info("Attempting to fetch Sophos Central Events")
-		eCnt, err := GetSophosEvents(*scb)
+		err = GetSophosEvents(*scb)
 		if err != nil {
 			scb.logger.Error("Error response : ", err)
 			return err
 		}
-		receivedEventsLogs = receivedEventsLogs + eCnt
-
-		scb.logger.Info("Total number of Event logs received : ", receivedEventsLogs)
 
 		scb.logger.Info("Attempting to fetch Sophos Alerts")
-		aCnt, err := GetSophosAlerts(*scb)
+		err = GetSophosAlerts(*scb)
 		if err != nil {
 			scb.logger.Error("Error response : ", err)
 			return err
 		}
-		receivedAlertsLogs = receivedAlertsLogs + aCnt
-
-		totalLogs = receivedEventsLogs + receivedAlertsLogs
-		go func() {
-			ch <- totalLogs
-		}()
-
-		scb.logger.Info("Total number of Alert logs received : ", receivedAlertsLogs)
-		scb.logger.Info("Total number of logs received : ", totalLogs)
 	}
 }
 
 // Stop stops sophoscentralbeat.
 func (scb *Sophoscentralbeat) Stop() {
 	scb.client.Close()
+	close(stopCh)
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
 	close(scb.done)
 }
@@ -367,16 +365,24 @@ func GetEvent(data interface{}) beat.Event {
 
 }
 
-func cycleRoutine(n time.Duration, ch chan int64) {
+func cycleRoutine(n time.Duration) {
 	for {
-		logsReceived := <-ch
-		time.Sleep(n * time.Second)
-		var recordsPerSecond int64
-		if logsReceived > 0 {
-			recordsPerSecond = logsReceived / int64(cycleTime)
+		select {
+		case <-stopCh:
+			break
+		default:
 		}
-
-		logp.Info("Total number of logs received :  %d", logsReceived)
+		time.Sleep(n * time.Second)
+		counterLock.Lock()
+		logsReceived = logsReceived + logsReceivedInCycle
+		var recordsPerSecond int64
+		if logsReceivedInCycle > 0 {
+			recordsPerSecond = logsReceivedInCycle / int64(cycleTime)
+		}
+		logp.Info("Total number of logs received in current cycle:  %d", logsReceivedInCycle)
+		logsReceivedInCycle = 0
+		counterLock.Unlock()
+		logp.Info("Total number of logs received:  %d", logsReceived)
 		logp.Info("Events Flush Rate:  %v per second", recordsPerSecond)
 	}
 }
