@@ -107,8 +107,6 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 
 //GetSophosEvents : calls Sophos Events Api
 func GetSophosEvents(scb Sophoscentralbeat) error {
-	var receivedEventsLogCount int64
-	var allEventsLogs int64
 
 	scb.logger.Info("Making sophos event call")
 	var isDataReceived bool
@@ -133,7 +131,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		return err
 	}
 
-	receivedEventsLogCount = int64(len(value.Items))
+	logsReceivedInCycle = logsReceivedInCycle + int64(len(value.Items))
 
 	for _, item := range value.Items {
 		scb.client.Publish(GetEvent(item))
@@ -155,7 +153,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 			return err
 		}
 
-		receivedEventsLogCount = receivedEventsLogCount + int64(len(nestedVal.Items))
+		logsReceivedInCycle = logsReceivedInCycle + int64(len(nestedVal.Items))
 
 		for _, item := range nestedVal.Items {
 			scb.client.Publish(GetEvent(item))
@@ -170,12 +168,6 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		scb.currentPosition.EventsTimestamp = scb.currentPosition.EventsTimestamp + 1
 		scb.logger.Info("Events sent")
 	}
-
-	counterLock.Lock()
-	allEventsLogs = receivedEventsLogCount
-	logp.Info("Event Logs received in current cycle : %d", allEventsLogs)
-	logsReceivedInCycle = logsReceivedInCycle + allEventsLogs
-	counterLock.Unlock()
 
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
 	return nil
@@ -199,8 +191,6 @@ func LegacyEventEntityToCommonMap(entity sophoscentral.LegacyEventEntity) (commo
 //GetSophosAlerts : call alerts API
 func GetSophosAlerts(scb Sophoscentralbeat) error {
 
-	var receivedAlertsLogCount int64
-	var allAlertsLogs int64
 	scb.logger.Info("Making sophos alert call")
 
 	var isDataReceived bool
@@ -225,7 +215,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 		return err
 	}
 
-	receivedAlertsLogCount = int64(len(value.Items))
+	logsReceivedInCycle = logsReceivedInCycle + int64(len(value.Items))
 
 	for _, item := range value.Items {
 		scb.client.Publish(GetEvent(item))
@@ -248,7 +238,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 			return err
 		}
 
-		receivedAlertsLogCount = receivedAlertsLogCount + int64(len(nestedVal.Items))
+		logsReceivedInCycle = logsReceivedInCycle + int64(len(nestedVal.Items))
 
 		for _, item := range nestedVal.Items {
 			scb.client.Publish(GetEvent(item))
@@ -263,12 +253,6 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 		scb.currentPosition.AlertsTimestamp = scb.currentPosition.AlertsTimestamp + 1
 		scb.logger.Info("Alerts sent")
 	}
-
-	counterLock.Lock()
-	allAlertsLogs = receivedAlertsLogCount
-	logp.Info("Alert Logs received in current cycle : %d", allAlertsLogs)
-	logsReceivedInCycle = logsReceivedInCycle + allAlertsLogs
-	counterLock.Unlock()
 
 	scb.posHandler.WritePostiontoFile(scb.currentPosition)
 	return nil
