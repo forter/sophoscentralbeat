@@ -152,7 +152,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 			Limit:  optional.NewInt32(1000),
 			Cursor: optional.NewString(value.NextCursor),
 		}
-		nestedVal, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
+		nestedVal, _, err := scb.sophos.EventControllerV1ImplApi.GetEventsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 		if err != nil {
 			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 			return err
@@ -237,7 +237,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 			Cursor: optional.NewString(value.NextCursor),
 		}
 
-		nestedVal, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, scb.config.APIKey, scb.config.Authorization, scb.basepath, options)
+		nestedVal, _, err := scb.sophos.AlertControllerV1ImplApi.GetAlertsUsingGET1(scb.sophosAuth, decryptedAPIKey, decryptedAuthorization, scb.basepath, options)
 		if err != nil {
 			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 			return err
