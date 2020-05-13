@@ -380,11 +380,11 @@ func cycleRoutine(n time.Duration) {
 		if logsReceivedInCycle > 0 {
 			recordsPerSecond = logsReceivedInCycle / int64(cycleTime)
 		}
-		logp.Info("Total number of logs received in current cycle:  %d", logsReceivedInCycle)
+		logp.Debug("Total number of logs received in current cycle:  ", "%d", logsReceivedInCycle)
 		logsReceivedInCycle = 0
 		counterLock.Unlock()
-		logp.Info("Total number of logs received:  %d", logsReceived)
-		logp.Info("Events Flush Rate:  %v per second", recordsPerSecond)
+		logp.Debug("Total number of logs received: ", "%d", logsReceived)
+		logp.Debug("Events Flush Rate:  ", "%v", recordsPerSecond)
 	}
 }
 
