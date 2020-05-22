@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/paths"
 )
 
 var lock sync.Mutex
@@ -77,7 +78,7 @@ func (position *PositionHandler) WritePostiontoFile(v interface{}) (bool, error)
 //GetPostionFile is used to get position file path
 func GetPostionFile() (string, error) {
 
-	tokenCacheDir := "/beats/sophoscentralbeat"
+	tokenCacheDir := paths.Paths.Home
 
 	posFolder := filepath.Join(tokenCacheDir, "logs")
 
