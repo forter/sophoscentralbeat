@@ -81,8 +81,6 @@ func GetPostionFile() (string, error) {
 
 	posFolder := filepath.Join(tokenCacheDir, "logs")
 
-	logp.Info("Position folder %v", posFolder)
-
 	err := os.MkdirAll(posFolder, 0700)
 	if err != nil {
 		return "", err
