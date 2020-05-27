@@ -6,7 +6,7 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/forter/sophoscentralbeat/cmd"
+	"github.com/logrhythm/sophoscentralbeat/cmd"
 )
 
 var systemTest *bool

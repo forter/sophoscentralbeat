@@ -1,5 +1,5 @@
 BEAT_NAME=sophoscentralbeat
-BEAT_PATH=github.com/forter/sophoscentralbeat
+BEAT_PATH=github.com/logrhythm/sophoscentralbeat
 BEAT_GOPATH=$(firstword $(subst :, ,${GOPATH}))
 SYSTEM_TESTS=false
 TEST_ENVIRONMENT=false

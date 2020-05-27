@@ -15,8 +15,8 @@ type AlertEntity struct {
 	// The date at which the alert was created
 	CreatedAt string `json:"created_at,omitempty"`
 	// The unique identifier of the customer linked with this record
-	CustomerId string                            `json:"customer_id,omitempty"`
-	Data       map[string]map[string]interface{} `json:"data,omitempty"`
+	CustomerId string      `json:"customer_id,omitempty"`
+	Data       interface{} `json:"data,omitempty"`
 	// The description of the alert that was generated
 	Description string `json:"description,omitempty"`
 	// The Event Services event id

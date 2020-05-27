@@ -4,9 +4,12 @@
 
 sophoscentralbeat:
   # Defines how often an event is sent to the output
-  period: 5m
-  api_key: ${SOPHOS_CENTRAL_API_KEY}
-  authorization: ${SOPHOS_CENTRAL_AUTHORIZATION}
+  period: 7s
+  api_key: ""
+  authorization: ""
+  api_baseurl: ""
+  heartbeatinterval : 2s
+  heartbeatdisabled: false
 
 #================================ General =====================================
 
@@ -71,14 +74,21 @@ setup.kibana:
 # Configure what output to use when sending the data collected by the beat.
 
 #-------------------------- Elasticsearch output ------------------------------
-output.elasticsearch:
+#output.elasticsearch:
   # Array of hosts to connect to.
-  hosts: ["localhost:9200"]
+  #hosts: ["localhost:9200"]
 
   # Optional protocol and basic auth credentials.
   #protocol: "https"
   #username: "elastic"
   #password: "changeme"
+
+output:
+    file:
+      path: "data"
+      filename: "sophosbeat.dat"
+      rotate_every_kb: 1000
+      number_of_files: 50
 
 #----------------------------- Logstash output --------------------------------
 #output.logstash:
@@ -107,7 +117,7 @@ processors:
 
 # Sets log level. The default log level is info.
 # Available log levels are: error, warning, info, debug
-#logging.level: debug
+logging.level: debug
 
 # At debug level, you can selectively enable logging only for some components.
 # To enable all selectors use ["*"]. Examples of other selectors are "beat",
