@@ -96,7 +96,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	if currentPos.AlertsTimestamp < yesterdayTime {
 		currentPos.AlertsTimestamp = yesterdayTime
 	}
-
+	logp.Info("Config fields: %+v", c)
 	bt := &Sophoscentralbeat{
 		done:            make(chan struct{}),
 		sophos:          sophos,
