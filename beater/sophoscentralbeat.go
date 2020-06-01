@@ -135,7 +135,6 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 		return err
 	}
-	logp.Info("Log for parent events: %d", int64(len(value.Items)))
 	updateCounter(int64(len(value.Items)))
 
 	for _, item := range value.Items {
@@ -157,7 +156,6 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 			return err
 		}
-		logp.Info("Log for nested events: %d", int64(len(nestedVal.Items)))
 		updateCounter(int64(len(nestedVal.Items)))
 
 		for _, item := range nestedVal.Items {
@@ -219,7 +217,6 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 		return err
 	}
-	logp.Info("Log for parent alerts: %d", int64(len(value.Items)))
 	updateCounter(int64(len(value.Items)))
 
 	for _, item := range value.Items {
@@ -242,7 +239,6 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 			return err
 		}
-		logp.Info("Log for nested alerts: %d", int64(len(nestedVal.Items)))
 		updateCounter(int64(len(nestedVal.Items)))
 
 		for _, item := range nestedVal.Items {
