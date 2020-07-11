@@ -135,7 +135,6 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 		return err
 	}
-
 	updateCounter(int64(len(value.Items)))
 
 	for _, item := range value.Items {
@@ -157,8 +156,7 @@ func GetSophosEvents(scb Sophoscentralbeat) error {
 			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 			return err
 		}
-
-		updateCounter(int64(len(value.Items)))
+		updateCounter(int64(len(nestedVal.Items)))
 
 		for _, item := range nestedVal.Items {
 			scb.client.Publish(GetEvent(item))
@@ -219,7 +217,6 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 		scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 		return err
 	}
-
 	updateCounter(int64(len(value.Items)))
 
 	for _, item := range value.Items {
@@ -242,8 +239,7 @@ func GetSophosAlerts(scb Sophoscentralbeat) error {
 			scb.logger.Error("Call to Sophos Central Server failed. Please check Credentials(authorization, api_key or header). Error : ", err)
 			return err
 		}
-
-		updateCounter(int64(len(value.Items)))
+		updateCounter(int64(len(nestedVal.Items)))
 
 		for _, item := range nestedVal.Items {
 			scb.client.Publish(GetEvent(item))
@@ -380,11 +376,11 @@ func cycleRoutine(n time.Duration) {
 		if logsReceivedInCycle > 0 {
 			recordsPerSecond = logsReceivedInCycle / int64(cycleTime)
 		}
-		logp.Debug("Total number of logs received in current cycle:  ", "%d", logsReceivedInCycle)
+		logp.Info("Total number of logs received in current cycle:  %d", logsReceivedInCycle)
 		logsReceivedInCycle = 0
 		counterLock.Unlock()
-		logp.Debug("Total number of logs received: ", "%d", logsReceived)
-		logp.Debug("Events Flush Rate:  ", "%v", recordsPerSecond)
+		logp.Info("Total number of logs received: %d", logsReceived)
+		logp.Info("Events Flush Rate:  %v", recordsPerSecond)
 	}
 }
 
