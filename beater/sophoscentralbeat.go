@@ -17,8 +17,7 @@ import (
 	"github.com/logrhythm/sophoscentralbeat/sophoscentral"
 	"github.com/mitchellh/mapstructure"
 
-	encr 	"github.com/logrhythm/sophoscentralbeat/lrutilities/crypto"
-
+	encr "github.com/logrhythm/lrutilities/crypto"
 )
 
 // Sophoscentralbeat configuration.
