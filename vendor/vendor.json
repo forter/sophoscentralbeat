@@ -9,10 +9,22 @@
 			"revisionTime": "2018-04-07T02:43:04Z"
 		},
 		{
+			"checksumSHA1": "x9dJv+jQhUFN6R6h4fzPjGLvQLg=",
+			"path": "github.com/kr/text",
+			"revision": "e2ffdb16a802fe2bb95e2e35ff34f0e53aeef34f",
+			"revisionTime": "2018-05-06T08:24:08Z"
+		},
+		{
 			"checksumSHA1": "4PINIDB/Vd357g91+a3RONh2vRk=",
 			"path": "github.com/mitchellh/mapstructure",
 			"revision": "3536a929edddb9a5b34bd6861dc4a9647cb459fe",
 			"revisionTime": "2018-10-05T04:51:35Z"
+		},
+		{
+			"checksumSHA1": "7+zlrhmRKnlIG38Vu6n4uE2jclM=",
+			"path": "github.com/niemeyer/pretty",
+			"revision": "a10e7caefd8e0d600cea437f5c3613aeb1553d56",
+			"revisionTime": "2020-02-27T12:48:42Z"
 		},
 		{
 			"checksumSHA1": "r3TepGHO4dhGIrtN0jV7TFq8Kms=",
@@ -31,6 +43,18 @@
 			"path": "golang.org/x/oauth2/internal",
 			"revision": "950ef44c6e079baf075030377d90bf0c7e4b7b7a",
 			"revisionTime": "2019-05-17T17:56:57Z"
+		},
+		{
+			"checksumSHA1": "QY5pnyaPitEbzURHliLLwUPK67I=",
+			"path": "gopkg.in/check.v1",
+			"revision": "8fa46927fb4f5b54d48bde78c6c08db205b2298c",
+			"revisionTime": "2020-02-27T12:52:54Z"
+		},
+		{
+			"checksumSHA1": "hphHCtLr1dWHJ+AOAb6yaywbcWM=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "0b1645d91e851e735d3e23330303ce81f70adbe3",
+			"revisionTime": "2020-05-06T23:08:38Z"
 		}
 	],
 	"rootPath": "github.com/logrhythm/sophoscentralbeat"
