@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -48,10 +49,16 @@ var (
 	counterLock         sync.RWMutex
 	logsReceivedInCycle int64
 	logsReceived        int64
+	fqBeatName          string
 )
 
 // ServiceName is the name of the service
-const ServiceName = "sophoscentralbeat"
+const (
+	// ServiceName is the name of the service
+	ServiceName = "sophoscentralbeat"
+	//Environment variable name for fully qualified beat name
+	FQBeatName = "FullyQualifiedBeatName"
+)
 
 // New creates an instance of sophoscentralbeat.
 func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
@@ -79,7 +86,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		logp.Err("Unable to get position Handler %v", err)
 		return nil, err
 	}
-
+	fqBeatName = os.Getenv(FQBeatName)
 	currentPos := new(scbPosition)
 	poserr := pos.ReadPositionfromFile(currentPos)
 	yesterdayTime := GenerateYesterdayTimeStamp()
@@ -354,7 +361,8 @@ func GetEvent(data interface{}) beat.Event {
 
 		Fields: common.MapStr{
 
-			"response": data,
+			"response":               data,
+			"fullyqualifiedbeatname": fqBeatName,
 		},
 	}
 

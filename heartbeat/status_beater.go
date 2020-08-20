@@ -94,7 +94,8 @@ func (sb *StatusBeater) PublishEvent(logData []byte, publish func(event beat.Eve
 	event := beat.Event{
 		Timestamp: time.Now(),
 		Fields: common.MapStr{
-			"heartbeat": string(logData),
+			"heartbeat":              string(logData),
+			"fullyqualifiedbeatname": fqBeatName,
 		},
 	}
 	publish(event)
