@@ -56,7 +56,7 @@ var (
 const (
 	// ServiceName is the name of the service
 	ServiceName = "sophoscentralbeat"
-	//Environment variable name for fully qualified beat name
+	// FQBeatNamevariable name for fully qualified beat name
 	FQBeatName = "FullyQualifiedBeatName"
 )
 
